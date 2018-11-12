@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -43,7 +44,7 @@ func detectType(
 	buffer := make([]byte, 512)
 
 	size, err := file.Read(buffer)
-	if err != nil {
+	if err != nil && err != io.EOF {
 		return "", karma.Format(
 			err,
 			"unable to read file %s", fullpath,

@@ -92,8 +92,12 @@ func main() {
 			return nil
 		}
 
-		if _, ok := ignoreDirs[path]; ok {
-			return filepath.SkipDir
+		if info.IsDir() {
+			if _, ok := ignoreDirs[path]; ok {
+				return filepath.SkipDir
+			}
+
+			return nil
 		}
 
 		file := &File{
