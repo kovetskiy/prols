@@ -1,7 +1,9 @@
 # prols
 
-This program is suitable for people who has such thoughts while working with
-list of files in their favorite editor:
+<img src="wow.jpg" height="200px" />
+
+This program is suitable for people who met with following thoughts while
+working with list of files in their favorite editor:
 
 - I'm not editing any binary files therefore I don't want to see them
 - I'm a %language% developer therefore I want to see files with specific extension on top of the list of files
@@ -74,7 +76,7 @@ rules:
 Let's save this file to `~/.config/prols/prols.conf` and run it in this
 project:
 
-```
+```bash
 $ prols
 prols.conf
 README.md
@@ -87,6 +89,14 @@ rule.go
 If you want to reverse sort, you can run program like `prols | tac`.
 
 As you can see, files are sorted as it's expected.
+
+# Installation
+
+The program is go-gettable:
+
+```bash
+go get github.com/kovetskiy/prols
+```
 
 # License
 MIT
