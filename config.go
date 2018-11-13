@@ -10,6 +10,7 @@ type Config struct {
 	IgnoreDirs   []string `yaml:"ignore_dirs" required:"true"`
 	HideNegative bool     `yaml:"hide_negative"`
 	Rules        []Rule
+	Reverse      bool `yaml:"reverse"`
 
 	PreSort []PreSort `yaml:"presort"`
 }

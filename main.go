@@ -86,6 +86,13 @@ func main() {
 		}
 	}
 
+	if config.Reverse {
+		for i := len(files)/2 - 1; i >= 0; i-- {
+			opp := len(files) - 1 - i
+			files[i], files[opp] = files[opp], files[i]
+		}
+	}
+
 	for _, file := range files {
 		if config.HideNegative && file.Score < 0 {
 			continue
