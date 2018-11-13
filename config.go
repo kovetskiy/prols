@@ -7,9 +7,18 @@ import (
 )
 
 type Config struct {
-	IgnoreDirs []string `yaml:"ignore_dirs" required:"true"`
-	HideNegative bool `yaml:"hide_negative"`
-	Rules      []Rule
+	IgnoreDirs   []string `yaml:"ignore_dirs" required:"true"`
+	HideNegative bool     `yaml:"hide_negative"`
+	Rules        []Rule
+
+	PreSort []PreSort `yaml:"presort"`
+}
+
+type PreSort struct {
+	Field   string
+	depth   bool
+	path    bool
+	Reverse bool
 }
 
 func LoadConfig(path string) (*Config, error) {
@@ -27,6 +36,23 @@ func LoadConfig(path string) (*Config, error) {
 				"invalid config rule #%v", i+1,
 			)
 		}
+	}
+
+	for i, presort := range config.PreSort {
+		switch presort.Field {
+		case "depth":
+			presort.depth = true
+		case "path":
+			presort.path = true
+
+		default:
+			return nil, karma.Format(
+				err,
+				"invalid config presort #v", i+1,
+			)
+		}
+
+		config.PreSort[i] = presort
 	}
 
 	return &config, nil

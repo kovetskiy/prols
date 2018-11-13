@@ -71,8 +71,31 @@ func main() {
 		)
 	}
 
-	_ = config
+	files, err := walk(config)
+	if err != nil {
+		log.Fatalf(err, "unable to walk directory")
+	}
 
+	files = applyPreSort(files, config.PreSort)
+	files = applyRules(files, config.Rules)
+	files = applySortScore(files)
+
+	if debug {
+		for _, file := range files {
+			log.Debugf(nil, "%s %d", file.Path, file.Score)
+		}
+	}
+
+	for _, file := range files {
+		if config.HideNegative && file.Score < 0 {
+			continue
+		}
+
+		fmt.Println(file.Path)
+	}
+}
+
+func walk(config *Config) ([]*File, error) {
 	ignoreDirs := map[string]struct{}{}
 	for _, path := range config.IgnoreDirs {
 		ignoreDirs[path] = struct{}{}
@@ -120,13 +143,60 @@ func main() {
 		return nil
 	}
 
-	err = filepath.Walk(".", walk)
+	err := filepath.Walk(".", walk)
 	if err != nil {
-		log.Fatalf(err, "unable to walk")
+		return nil, err
 	}
 
+	return files, nil
+}
+
+func applyPreSort(files []*File, presorts []PreSort) []*File {
+	sort.SliceStable(files, func(i, j int) bool {
+		for _, presort := range presorts {
+			switch {
+			case presort.depth:
+				if presort.Reverse {
+					if files[i].Depth() < files[j].Depth() {
+						return true
+					}
+				} else {
+					if files[i].Depth() > files[j].Depth() {
+						return true
+					}
+				}
+
+			case presort.path:
+				if presort.Reverse {
+					if files[i].Path > files[j].Path {
+						return true
+					}
+				} else {
+					if files[i].Path < files[j].Path {
+						return true
+					}
+				}
+			default:
+				panic("unexpected presort field: " + presort.Field)
+			}
+		}
+
+		return false
+	})
+
+	return files
+}
+
+func applySortScore(files []*File) []*File {
+	sort.SliceStable(files, func(i, j int) bool {
+		return files[i].Score < files[j].Score
+	})
+	return files
+}
+
+func applyRules(files []*File, rules []Rule) []*File {
 	for _, file := range files {
-		for _, rule := range config.Rules {
+		for _, rule := range rules {
 			if rule.Pass(file) {
 				if debug {
 					log.Debugf(nil, "%s passed %s", file.Path, rule)
@@ -137,21 +207,5 @@ func main() {
 		}
 	}
 
-	sort.SliceStable(files, func(i, j int) bool {
-		return files[i].Score < files[j].Score
-	})
-
-	if debug {
-		for _, file := range files {
-			log.Debugf(nil, "%s %d", file.Path, file.Score)
-		}
-	}
-
-	for _, file := range files {
-		if config.HideNegative && file.Score < 0 {
-			continue
-		}
-
-		fmt.Println(file.Path)
-	}
+	return files
 }
