@@ -55,24 +55,7 @@ ignore_dirs:
     - ".git"
 ```
 
-Full configuration file will look like:
-```yaml
-ignore_dirs:
-    - ".git"
-
-hide_negative: true
-
-rules:
-    - suffix: .go
-      score: 10
-    - suffix: .md
-      score: 5
-    - binary: true
-      score: -10
-
-# vim: ft=yaml
-```
-
+Full configuration file will look like in this file: [prols.conf](prols.conf)
 Let's save this file to `~/.config/prols/prols.conf` and run it in this
 project:
 
