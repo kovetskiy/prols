@@ -123,7 +123,7 @@ func walk(config *Config) ([]*File, error) {
 		}
 
 		if info.IsDir() {
-			if _, ok := ignoreDirs[path]; ok {
+			if _, ok := ignoreDirs[info.Name()]; ok {
 				return filepath.SkipDir
 			}
 
