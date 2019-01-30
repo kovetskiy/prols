@@ -130,6 +130,10 @@ func walk(config *Config) ([]*File, error) {
 			return nil
 		}
 
+		if !info.Mode().IsRegular() {
+			return nil
+		}
+
 		file := &File{
 			Path: path,
 		}
