@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	Lister       []string `yaml:"lister"`
 	IgnoreDirs   []string `yaml:"ignore_dirs" required:"true"`
 	HideNegative bool     `yaml:"hide_negative"`
 	Rules        []Rule
@@ -49,7 +50,7 @@ func LoadConfig(path string) (*Config, error) {
 		default:
 			return nil, karma.Format(
 				err,
-				"invalid config presort #v", i+1,
+				"invalid config presort #%v", i+1,
 			)
 		}
 

@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/docopt/docopt-go"
 	"github.com/kovetskiy/lorg"
 	"github.com/reconquest/cog"
+	"github.com/reconquest/karma-go"
 )
 
 var (
@@ -116,24 +119,7 @@ func walk(config *Config) ([]*File, error) {
 		}
 	}
 
-	files := []*File{}
-	walk := func(path string, info os.FileInfo, err error) error {
-		if path == "." {
-			return nil
-		}
-
-		if info.IsDir() {
-			if _, ok := ignoreDirs[info.Name()]; ok {
-				return filepath.SkipDir
-			}
-
-			return nil
-		}
-
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
+	create := func(path string) (*File, error) {
 		file := &File{
 			Path: path,
 		}
@@ -141,7 +127,7 @@ func walk(config *Config) ([]*File, error) {
 		if shouldDetectType {
 			contentType, err := detectType(".", path)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			if contentType == "application/octet-stream" {
@@ -149,14 +135,89 @@ func walk(config *Config) ([]*File, error) {
 			}
 		}
 
-		files = append(files, file)
-
-		return nil
+		return file, nil
 	}
 
-	err := filepath.Walk(".", walk)
-	if err != nil {
-		return nil, err
+	files := []*File{}
+
+	if len(config.Lister) > 0 {
+		args := []string{}
+		if len(config.Lister) > 0 {
+			args = config.Lister[1:]
+		}
+
+		cmd := exec.Command(config.Lister[0], args...)
+		out, err := cmd.Output()
+		if err != nil {
+			return nil, karma.
+				Describe("lister", config.Lister).
+				Format(
+					err,
+					"unable to run external lister",
+				)
+		}
+
+		paths := strings.Split(strings.TrimSpace(string(out)), "\n")
+
+	pathsLoop:
+		for _, path := range paths {
+			components := filepath.SplitList(path)
+			if len(components) > 1 {
+				for _, dir := range components[:len(components)-1] {
+					if _, ok := ignoreDirs[dir]; ok {
+						continue pathsLoop
+					}
+				}
+			}
+
+			info, err := os.Stat(path)
+			if err != nil {
+				continue
+			}
+
+			if info.IsDir() {
+				continue
+			}
+
+			file, err := create(path)
+			if err != nil {
+				return nil, err
+			}
+
+			files = append(files, file)
+		}
+	} else {
+		walk := func(path string, info os.FileInfo, err error) error {
+			if path == "." {
+				return nil
+			}
+
+			if info.IsDir() {
+				if _, ok := ignoreDirs[info.Name()]; ok {
+					return filepath.SkipDir
+				}
+
+				return nil
+			}
+
+			if !info.Mode().IsRegular() {
+				return nil
+			}
+
+			file, err := create(path)
+			if err != nil {
+				return err
+			}
+
+			files = append(files, file)
+
+			return nil
+		}
+
+		err := filepath.Walk(".", walk)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return files, nil
