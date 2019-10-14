@@ -8,7 +8,9 @@ import (
 
 	"github.com/docopt/docopt-go"
 	"github.com/kovetskiy/lorg"
+	"github.com/monochromegane/go-gitignore"
 	"github.com/reconquest/cog"
+	"github.com/reconquest/karma-go"
 )
 
 var (
@@ -103,6 +105,19 @@ func main() {
 }
 
 func walk(config *Config) ([]*File, error) {
+	var ignoreMatcher gitignore.IgnoreMatcher
+
+	if config.UseGitignore {
+		var err error
+		ignoreMatcher, err = gitignore.NewGitIgnore(".gitignore")
+		if err != nil && !os.IsNotExist(err) {
+			return nil, karma.Format(
+				err,
+				"unable to read .gitignore",
+			)
+		}
+	}
+
 	ignoreDirs := map[string]struct{}{}
 	for _, path := range config.IgnoreDirs {
 		ignoreDirs[path] = struct{}{}
@@ -120,6 +135,16 @@ func walk(config *Config) ([]*File, error) {
 	walk := func(path string, info os.FileInfo, err error) error {
 		if path == "." {
 			return nil
+		}
+
+		if ignoreMatcher != nil {
+			if ignoreMatcher.Match(path, info.IsDir()) {
+				if info.IsDir() {
+					return filepath.SkipDir
+				}
+
+				return nil
+			}
 		}
 
 		if info.IsDir() {

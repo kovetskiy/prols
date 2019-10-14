@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	IgnoreDirs   []string `yaml:"ignore_dirs" required:"true"`
+	UseGitignore bool   `yaml:"use_gitignore"`
 	HideNegative bool     `yaml:"hide_negative"`
 	Rules        []Rule
 	Reverse      bool `yaml:"reverse"`
