@@ -1,10 +1,13 @@
 package main
 
 import (
-	"fmt"
+	"bytes"
+	"io"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 	"sort"
+	"strings"
 
 	"github.com/docopt/docopt-go"
 	"github.com/kovetskiy/lorg"
@@ -30,6 +33,7 @@ Options:
   --debug             Print debug messages.
   -h --help           Show this screen.
   --version           Show version.
+  --cpuprofile <path> Enable cpu profiling.
 `,
 	)
 )
@@ -63,6 +67,15 @@ func main() {
 
 	initLogger(args)
 
+	if path, ok := args["--cpuprofile"].(string); ok {
+		file, err := os.Create(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pprof.StartCPUProfile(file)
+		defer pprof.StopCPUProfile()
+	}
+
 	globalPath := args["--global"].(string)
 
 	config, err := LoadConfig(globalPath)
@@ -83,9 +96,21 @@ func main() {
 	files = applySortScore(files)
 
 	if debug {
-		for _, file := range files {
-			log.Debugf(nil, "%s %d", file.Path, file.Score)
+		log.Debug("")
+		log.Debug("items with all scores")
+		for i := 0; i < len(files); i++ {
+			log.Debugf(nil, "%s %d", files[i].Path, files[i].Score)
 		}
+	}
+
+	if config.HideNegative {
+		files = removeNegative(files)
+	}
+
+	if config.ScoreDirs {
+		files = applyScoreDirs(files)
+		// after changing scores we need to re-sort files again
+		files = applySortScore(files)
 	}
 
 	if config.Reverse {
@@ -95,13 +120,48 @@ func main() {
 		}
 	}
 
+	if debug {
+		log.Debug("")
+		log.Debug("resulting scores (possibly reversed)")
+		for i := 0; i < len(files); i++ {
+			log.Debugf(nil, "%s %d", files[i].Path, files[i].Score)
+		}
+	}
+
+	writeResult(files)
+}
+
+func writeResult(files []*File) {
+	buffer := bytes.NewBufferString("")
 	for _, file := range files {
-		if config.HideNegative && file.Score < 0 {
-			continue
+		buffer.WriteString(file.Path)
+		buffer.WriteString("\n")
+	}
+
+	// io.Copy works much better than os.Stdout.Write(buffer)
+	// results on 180k of files:
+	// io.Copy - 0.15s
+	// os.Stdout.Write - 0.20s
+	io.Copy(os.Stdout, buffer)
+}
+
+func removeNegative(files []*File) []*File {
+	// files are already sorted so we need to find the latest element with
+	// negative score and re-slice files
+	last := -1
+	for i := 0; i < len(files); i++ {
+		if files[i].Score >= 0 {
+			break
 		}
 
-		fmt.Println(file.Path)
+		last = i
 	}
+
+	if last == -1 {
+		return files
+	}
+
+	return files[last+1:]
 }
 
 func walk(config *Config) ([]*File, error) {
@@ -241,6 +301,40 @@ func applyRules(files []*File, rules []Rule) []*File {
 				file.Score += rule.Score
 			}
 		}
+
+	}
+
+	return files
+}
+
+func applyScoreDirs(files []*File) []*File {
+	dirs := map[string]int{}
+	getBase := func(path string) string {
+		index := strings.Index(path, "/")
+		if index == -1 {
+			return "."
+		}
+
+		return path[:index] + "/"
+	}
+
+	write := func(path string, score int) {
+		name := getBase(path)
+
+		_, ok := dirs[name]
+		if !ok {
+			dirs[name] = score
+		} else {
+			dirs[name] += score
+		}
+	}
+
+	for _, file := range files {
+		write(file.Path, file.Score)
+	}
+
+	for _, file := range files {
+		file.Score += dirs[getBase(file.Path)]
 	}
 
 	return files
