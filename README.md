@@ -55,6 +55,9 @@ ignore_dirs:
     - ".git"
 ```
 
+Use `use_gitignore: true` if you want prols to use .gitignore for list of
+files/directories to ignore (glob patterns work too).
+
 Full configuration file will look like in this file: [prols.conf](prols.conf)
 Let's save this file to `~/.config/prols/prols.conf` and run it in this
 project:
@@ -69,9 +72,39 @@ main.go
 rule.go
 ```
 
-If you want to reverse sort, you can run program like `prols | tac`.
+If you want to reverse sort, use `reverse: true` in your configuration file.
 
-As you can see, files are sorted as it's expected.
+# My config
+
+```
+ignore_dirs:
+    - ".git"
+    - "vendor"
+
+use_gitignore: true
+hide_negative: true
+reverse: true
+
+presort:
+    - field: depth
+
+rules:
+    - score: 5
+    - suffix: .ttf
+      score: -10
+    - suffix: .xml
+      score: -1
+    - suffix: .png
+      score: -10
+    - suffix: .go
+      score: 10
+    - suffix: .java
+      score: 10
+    - suffix: .c
+      score: 10
+    - binary: true
+      score: -10
+```
 
 # Installation
 
