@@ -20,6 +20,22 @@ Then there is a big probability that this program will help you too.
 - sort list of files by calculated score
 - print results
 
+# Is it fast?
+
+Yes, blazingly fast. It utilizes all CPU cores and works even faster than GNU's
+find.
+
+Dataset:
+```
+$ find ./ -type f | wc -l
+32555
+```
+
+* `find ./ -type f > /dev/null` `0.100`
+* `prols > /dev/null` `0.056 total`
+
+2x times faster!
+
 # How to write a rule
 
 A rule contains of following fields (all fields are optional):

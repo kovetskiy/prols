@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	MaxThreads   int      `yaml:"max_threads" default:"0"`
-	IgnoreDirs   []string `yaml:"ignore_dirs" required:"true"`
+	IgnoreDirs   []string `yaml:"ignore_dirs"`
 	UseGitignore bool     `yaml:"use_gitignore"`
 	HideNegative bool     `yaml:"hide_negative"`
 	Rules        []Rule
