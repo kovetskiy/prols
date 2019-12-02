@@ -2,22 +2,22 @@
 
 <img src="wow.jpg" height="200px" />
 
-This program is suitable for people who met with following thoughts while
-working with list of files in their favorite editor:
+This program is suitable for people who met with the following thoughts while
+working with a list of files in their favorite editor:
 
-- I'm not editing any binary files therefore I don't want to see them
-- I'm a %language% developer therefore I want to see files with specific extension on top of the list of files
-- I'm also interested in %another-language% files, they should be listed after my
+- I'm not editing any binary files, therefore, I don't want to see them
+- I'm a %language% developer, therefore, I want to see files with a specific extension on top of the list of files
+- I'm also interested in %another-language% files and they should be listed after my
     primary language files
 
-Then there is a big probability that this program will help you too.
+Then there is a significant probability that this program will help you too.
 
 # How does it work
 
-- walk and find all files in current directory
-- read configuration file and read rules
-- calculate score of files
-- sort list of files by calculated score
+- find all files in the current directory
+- read the configuration file and read rules
+- calculate score of the files based on rule
+- sort list of files by score
 - print results
 
 # Is it fast
@@ -38,16 +38,16 @@ $ find ./ -type f | wc -l
 
 # How to write a rule
 
-A rule contains of following fields (all fields are optional):
+A rule consists of the following fields (all fields are optional):
 - `suffix` - check that filename contains this suffix (extension)
-- `prefix` - check that filename contains this prefix (some project oriented things)
+- `prefix` - check that filename contains this prefix (some project-oriented things)
 - `binary` - check that file is binary
 - `score` - score to apply if all conditions are passed
 
-If one of given points of rule are not passed, the rule's score will not be
-added to file's score.
+If one of the given points of the rule is not passed, the rule's score will not be
+added to the file's score.
 
-Example of list of rules:
+Example of a list of rules:
 ```yaml
 rules:
     - suffix: .go
@@ -61,7 +61,7 @@ hide_negative: true
 ```
 
 `hide_negative: true` means that prols will hide all files that has negative
-score, binary files will be hidden according to given configuration file.
+score, binary files will be hidden according to the given configuration file.
 
 You can also add `ignore_dirs` to hide some git directories completely, like
 .git:
@@ -74,7 +74,7 @@ ignore_dirs:
 Use `use_gitignore: true` if you want prols to use .gitignore for list of
 files/directories to ignore (glob patterns work too).
 
-Full configuration file will look like in this file: [prols.conf](prols.conf)
+Complete configuration file will look like in this file: [prols.conf](prols.conf)
 Let's save this file to `~/.config/prols/prols.conf` and run it in this
 project:
 
@@ -90,7 +90,7 @@ rule.go
 
 If you want to reverse sort, use `reverse: true` in your configuration file.
 
-# My config
+# My own config
 
 ```
 ignore_dirs:
