@@ -12,7 +12,7 @@ working with list of files in their favorite editor:
 
 Then there is a big probability that this program will help you too.
 
-# How it works
+# How does it work
 
 - walk and find all files in current directory
 - read configuration file and read rules
@@ -20,7 +20,7 @@ Then there is a big probability that this program will help you too.
 - sort list of files by calculated score
 - print results
 
-# Is it fast?
+# Is it fast
 
 Yes, blazingly fast. It utilizes all CPU cores and works even faster than GNU's
 find.
