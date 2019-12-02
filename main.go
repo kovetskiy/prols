@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"io"
 	"os"
-	"path/filepath"
 	"runtime/pprof"
 	"sort"
 	"strings"
@@ -178,11 +177,6 @@ func walk(config *Config) ([]*File, error) {
 		}
 	}
 
-	ignoreDirs := map[string]struct{}{}
-	for _, path := range config.IgnoreDirs {
-		ignoreDirs[path] = struct{}{}
-	}
-
 	shouldDetectType := false
 	for _, rule := range config.Rules {
 		if rule.Binary != nil {
@@ -191,60 +185,24 @@ func walk(config *Config) ([]*File, error) {
 		}
 	}
 
-	files := []*File{}
-	walk := func(path string, info os.FileInfo, err error) error {
-		if path == "." {
-			return nil
-		}
-
-		if ignoreMatcher != nil {
-			if ignoreMatcher.Match(path, info.IsDir()) {
-				if info.IsDir() {
-					return filepath.SkipDir
-				}
-
-				return nil
-			}
-		}
-
-		if info.IsDir() {
-			if _, ok := ignoreDirs[info.Name()]; ok {
-				return filepath.SkipDir
-			}
-
-			return nil
-		}
-
-		if !info.Mode().IsRegular() {
-			return nil
-		}
-
-		file := &File{
-			Path: path,
-		}
-
-		if shouldDetectType {
-			contentType, err := detectType(".", path)
-			if err != nil {
-				return err
-			}
-
-			if contentType == "application/octet-stream" {
-				file.Binary = true
-			}
-		}
-
-		files = append(files, file)
-
-		return nil
+	scanner := &Scanner{
+		ignoreMap:        makeMap(config.IgnoreDirs),
+		ignoreMatcher:    ignoreMatcher,
+		shouldDetectType: shouldDetectType,
 	}
 
-	err := filepath.Walk(".", walk)
-	if err != nil {
-		return nil, err
+	scheduler := &Scheduler{
+		maxThreads: config.MaxThreads,
 	}
 
-	return files, nil
+	scheduler.scanner = scanner
+	scanner.scheduler = scheduler
+
+	scheduler.Schedule(".")
+
+	scheduler.Wait()
+
+	return scanner.items, nil
 }
 
 func applyPreSort(files []*File, presorts []PreSort) []*File {

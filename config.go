@@ -1,12 +1,15 @@
 package main
 
 import (
+	"runtime"
+
 	"github.com/go-yaml/yaml"
 	"github.com/kovetskiy/ko"
 	"github.com/reconquest/karma-go"
 )
 
 type Config struct {
+	MaxThreads   int      `yaml:"max_threads" default:"0"`
 	IgnoreDirs   []string `yaml:"ignore_dirs" required:"true"`
 	UseGitignore bool     `yaml:"use_gitignore"`
 	HideNegative bool     `yaml:"hide_negative"`
@@ -29,6 +32,10 @@ func LoadConfig(path string) (*Config, error) {
 	err := ko.Load(path, &config, yaml.Unmarshal)
 	if err != nil {
 		return nil, err
+	}
+
+	if config.MaxThreads == 0 {
+		config.MaxThreads = runtime.NumCPU()
 	}
 
 	for i, rule := range config.Rules {
