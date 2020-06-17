@@ -22,7 +22,7 @@ var (
 Flexible project-wide search tool based on rules and scores.
 
 Usage:
-  prols [options]
+  prols [options] [<dir>]
   prols -h | --help
   prols --version
 
@@ -85,7 +85,12 @@ func main() {
 		)
 	}
 
-	files, err := walk(config)
+	dir, ok := args["<dir>"].(string)
+	if !ok {
+		dir = "."
+	}
+
+	files, err := walk(config, dir)
 	if err != nil {
 		log.Fatalf(err, "unable to walk directory")
 	}
@@ -163,7 +168,7 @@ func removeNegative(files []*File) []*File {
 	return files[last+1:]
 }
 
-func walk(config *Config) ([]*File, error) {
+func walk(config *Config, dir string) ([]*File, error) {
 	var ignoreMatcher gitignore.IgnoreMatcher
 
 	if config.UseGitignore {
@@ -198,7 +203,7 @@ func walk(config *Config) ([]*File, error) {
 	scheduler.scanner = scanner
 	scanner.scheduler = scheduler
 
-	scheduler.Schedule(".")
+	scheduler.Schedule(dir)
 
 	scheduler.Wait()
 
@@ -259,7 +264,6 @@ func applyRules(files []*File, rules []Rule) []*File {
 				file.Score += rule.Score
 			}
 		}
-
 	}
 
 	return files
