@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"path/filepath"
 	"runtime/pprof"
 	"sort"
 	"strings"
@@ -35,6 +36,7 @@ Options:
   -c --global <path>   Use specified global prols file.
                         [default: $HOME/.config/prols/prols.conf]
   -r <rule>            An additional rule.
+  -o --only-dirs       Show only directories.
   --debug              Print debug messages.
   -h --help            Show this screen.
   --version            Show version.
@@ -132,6 +134,10 @@ func main() {
 		files = applySortScore(files)
 	}
 
+	if args["--only-dirs"].(bool) {
+		files = applyOnlyDirs(files)
+	}
+
 	if config.Reverse {
 		for i := len(files)/2 - 1; i >= 0; i-- {
 			opp := len(files) - 1 - i
@@ -141,7 +147,7 @@ func main() {
 
 	if debug {
 		log.Debug("")
-		log.Debug("resulting scores (possibly reversed)")
+		log.Debugf(nil, "resulting scores (reversed = %v)", config.Reverse)
 		for i := 0; i < len(files); i++ {
 			log.Debugf(nil, "%s %d", files[i].Path, files[i].Score)
 		}
@@ -266,6 +272,72 @@ func applySortScore(files []*File) []*File {
 		return files[i].Score < files[j].Score
 	})
 	return files
+}
+
+// NOTE: this function should be called after all required modifications of
+// files. It changes input values for the sake of performance.
+func applyOnlyDirs(files []*File) []*File {
+	hierarchy := map[string]map[string]struct{}{}
+	seentimes := map[string]int{}
+
+	dirs := []*File{}
+
+	see := func(path, parent string) bool {
+		_, ok := seentimes[path]
+		if ok && parent != "" {
+			_, ok := hierarchy[path][parent]
+			if !ok {
+				hierarchy[path][parent] = struct{}{}
+				seentimes[path] += 1
+			}
+		} else {
+			seentimes[path] = 1
+			hierarchy[path] = map[string]struct{}{
+				parent: {},
+			}
+		}
+
+		return ok
+	}
+
+	for _, file := range files {
+		file.Path = filepath.Dir(file.Path)
+		if file.Path == "." {
+			continue
+		}
+
+		if see(file.Path, file.Path) {
+			continue
+		}
+
+		cursor := file.Path
+		for {
+			dir := filepath.Dir(cursor)
+			if dir == "." {
+				break
+			}
+
+			if see(dir, cursor) {
+				break
+			}
+
+			cursor = dir
+		}
+
+		dirs = append(dirs, file)
+	}
+
+	for path, score := range seentimes {
+		dirs = append(dirs, &File{Path: path, Score: score})
+	}
+
+	dirs = applySortScore(dirs)
+
+	for i := range dirs {
+		dirs[i].Path += "/"
+	}
+
+	return dirs
 }
 
 func applyRules(files []*File, rules []Rule) []*File {
