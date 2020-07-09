@@ -21,18 +21,24 @@ var (
 
 Flexible project-wide search tool based on rules and scores.
 
+User can specify an additional <rule>, as key:value separated by a colon.
+The same syntax as in config, but use comma for separating lines.
+Example:
+	suffix:.yaml,score:10
+
 Usage:
-  prols [options] [<dir>]
+  prols [options] [-r <rule>] [<dir>]
   prols -h | --help
   prols --version
 
 Options:
-  -c --global <path>  Use specified global prols file.
-                       [default: $HOME/.config/prols/prols.conf]
-  --debug             Print debug messages.
-  -h --help           Show this screen.
-  --version           Show version.
-  --cpuprofile <path> Enable cpu profiling.
+  -c --global <path>   Use specified global prols file.
+                        [default: $HOME/.config/prols/prols.conf]
+  -r <rule>            An additional rule.
+  --debug              Print debug messages.
+  -h --help            Show this screen.
+  --version            Show version.
+  --cpuprofile <path>  Enable cpu profiling.
 `,
 	)
 )
@@ -83,6 +89,15 @@ func main() {
 			err,
 			"unable to load configuration file: %s", globalPath,
 		)
+	}
+
+	if extraRule, ok := args["-r"].(string); ok {
+		rule, err := ParseRule(extraRule)
+		if err != nil {
+			log.Fatalf(err, "unable to parse rule: %s", args["-r"].(string))
+		}
+
+		config.Rules = append(config.Rules, rule)
 	}
 
 	dir, ok := args["<dir>"].(string)

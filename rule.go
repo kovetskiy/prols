@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,33 @@ type Rule struct {
 	depthComparison byte
 	Binary          *bool `yaml:"binary,omitempty"`
 	Score           int   `yaml:"score" required:"true"`
+}
+
+func ParseRule(raw string) (Rule, error) {
+	var rule Rule
+
+	lines := []string{}
+	for _, line := range strings.Split(raw, ",") {
+		chunks := strings.SplitN(line, ":", 2)
+		if len(chunks) < 2 {
+			return rule, fmt.Errorf(
+				"invalid part of rule: expected key:value, but got: %s",
+				line,
+			)
+		}
+
+		lines = append(
+			lines,
+			strings.TrimSpace(chunks[0])+": "+strings.TrimSpace(chunks[1]),
+		)
+	}
+
+	err := yaml.Unmarshal([]byte(strings.Join(lines, "\n")), &rule)
+	if err != nil {
+		return rule, err
+	}
+
+	return rule, rule.init()
 }
 
 func (rule Rule) String() string {
