@@ -71,7 +71,8 @@ func (scanner *Scanner) Scan(dir string) {
 		}
 
 		file := &File{
-			Path: path,
+			Path:    path,
+			ModTime: info.ModTime(),
 		}
 
 		if scanner.shouldDetectType {

@@ -22,6 +22,7 @@ type Config struct {
 
 type PreSort struct {
 	Field   string
+	modTime bool
 	depth   bool
 	path    bool
 	Reverse bool
@@ -54,6 +55,8 @@ func LoadConfig(path string) (*Config, error) {
 			presort.depth = true
 		case "path":
 			presort.path = true
+		case "mod_time":
+			presort.modTime = true
 
 		default:
 			return nil, karma.Format(

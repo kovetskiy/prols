@@ -235,6 +235,17 @@ func applyPreSort(files []*File, presorts []PreSort) []*File {
 	sort.SliceStable(files, func(i, j int) bool {
 		for _, presort := range presorts {
 			switch {
+			case presort.modTime:
+				if presort.Reverse {
+					if files[i].ModTime.Before(files[j].ModTime) {
+						return true
+					}
+				} else {
+					if files[j].ModTime.Before(files[i].ModTime) {
+						return true
+					}
+				}
+
 			case presort.depth:
 				if presort.Reverse {
 					if files[i].Depth() < files[j].Depth() {

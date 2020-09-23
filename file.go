@@ -6,15 +6,17 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/reconquest/karma-go"
 )
 
 type File struct {
-	Path   string
-	Binary bool
-	Score  int
-	depth  int
+	Path    string
+	Binary  bool
+	Score   int
+	ModTime time.Time
+	depth   int
 }
 
 func (file *File) Depth() int {
