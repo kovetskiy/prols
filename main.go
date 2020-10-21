@@ -291,8 +291,6 @@ func applyOnlyDirs(files []*File) []*File {
 	hierarchy := map[string]map[string]struct{}{}
 	seentimes := map[string]int{}
 
-	dirs := []*File{}
-
 	see := func(path, parent string) bool {
 		_, ok := seentimes[path]
 		if ok && parent != "" {
@@ -334,10 +332,9 @@ func applyOnlyDirs(files []*File) []*File {
 
 			cursor = dir
 		}
-
-		dirs = append(dirs, file)
 	}
 
+	dirs := []*File{}
 	for path, score := range seentimes {
 		dirs = append(dirs, &File{Path: path, Score: score})
 	}
