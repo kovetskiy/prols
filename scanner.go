@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"sync/atomic"
 
 	"github.com/monochromegane/go-gitignore"
 )
@@ -15,6 +16,8 @@ type Scanner struct {
 	shouldDetectType bool
 	mutex            sync.Mutex
 	items            []*File
+	max              int64
+	found            int64
 }
 
 func makeMap(slice []string) map[string]struct{} {
@@ -32,6 +35,19 @@ func (scanner *Scanner) append(file *File) {
 	scanner.mutex.Unlock()
 }
 
+func (scanner *Scanner) checkMax() bool {
+	if scanner.max <= 0 {
+		return true
+	}
+
+	found := atomic.AddInt64(&scanner.found, 1)
+	if found >= scanner.max {
+		return false
+	}
+
+	return true
+}
+
 func (scanner *Scanner) Scan(dir string) {
 	infos, err := readdir(dir)
 	if err != nil {
@@ -41,6 +57,10 @@ func (scanner *Scanner) Scan(dir string) {
 
 	var path string
 	for _, info := range infos {
+		if !scanner.checkMax() {
+			return
+		}
+
 		if dir == "." {
 			path = info.Name()
 		} else {

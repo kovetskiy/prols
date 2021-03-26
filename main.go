@@ -212,6 +212,7 @@ func walk(config *Config, dir string) ([]*File, error) {
 	}
 
 	scanner := &Scanner{
+		max:              config.Max,
 		ignoreMap:        makeMap(config.IgnoreDirs),
 		ignoreMatcher:    ignoreMatcher,
 		shouldDetectType: shouldDetectType,

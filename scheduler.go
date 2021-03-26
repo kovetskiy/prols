@@ -28,17 +28,17 @@ func (scheduler *Scheduler) Schedule(dir string) {
 	scheduler.mutex.Unlock()
 
 	if async {
-		//log.Infof(nil, "%d async: %s", running, dir)
+		// log.Infof(nil, "thread:%d ASYNC: %s", running, dir)
 		scheduler.group.Add(1)
 		go func() {
 			scheduler.scanner.Scan(dir)
 
-			//log.Infof(nil, "async %s decrease", dir)
+			// log.Infof(nil, "thread:%d ASYNC %s DONE", running, dir)
 			scheduler.decrease()
 			scheduler.group.Done()
 		}()
 	} else {
-		//log.Infof(nil, "%d SYNC: [%s]", running, dir)
+		// log.Infof(nil, "thread:%d SYNC: [%s]", running, dir)
 		scheduler.scanner.Scan(dir)
 	}
 }
